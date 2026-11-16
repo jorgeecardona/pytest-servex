@@ -3,8 +3,8 @@ _commit: v0.2.0-1-gf3c3536
 _src_path: _starter
 author_email: jorgeecardona@gmail.com
 author_name: Jorge Cardona
-description: Start Docker containers, networks and volumes from frozen dataclasses, in
-  pytest or plain Python, once per test run and shared by parallel workers.
+description: Starts the Docker containers your tests need, once per test run, and shares
+  them with all workers.
 dist_name: pytest-servex
 gitlab_group: cardona-oss
 has_examples: false

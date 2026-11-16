@@ -4,7 +4,7 @@ Guidance for AI coding agents working in this repo. Humans: read README.md and C
 
 ## Overview
 
-pytest-servex: Start Docker containers, networks and volumes from frozen dataclasses, in pytest or plain Python, once per test run and shared by parallel workers.
+pytest-servex: Starts the Docker containers your tests need, once per test run, and shares them with all workers.
 
 ## Build
 

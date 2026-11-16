@@ -1,5 +1,5 @@
 site_name: pytest-servex
-site_description: Start Docker containers, networks and volumes from frozen dataclasses, in pytest or plain Python, once per test run and shared by parallel workers.
+site_description: Starts the Docker containers your tests need, once per test run, and shares them with all workers.
 repo_url: https://gitlab.com/cardona-oss/pytest-servex
 repo_name: cardona-oss/pytest-servex
 copyright: MIT &copy; Jorge Cardona
