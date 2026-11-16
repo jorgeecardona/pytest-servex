@@ -23,6 +23,17 @@ pytest-servex: Pytest fixtures that start test services in Docker once per run a
 - Lint: `make lint`. Types: `make typecheck` (pyright strict on `src/`).
 - Prefer frozen dataclasses and explicit types. Keep the public API typed (`py.typed`).
 
+## Design rules
+
+Jorge, 2026-11-16: the Zen of Python is the guide.
+
+- Frozen dataclasses for every spec (`Network`, `Volume`, `Tmpfs`, `Container`) and every
+  result (`RunningContainer`). Change one with `dataclasses.replace`, never by mutation.
+- Plain verbs: `start()`, `stop()`, and the context manager `running()`. No builder chains
+  (`.with_env().with_port()`), no class per service. A service is data: `POSTGRES = Container(...)`.
+- Flat, explicit flow: `with running(net), running(pg) as started:`.
+- Results hold ids and endpoints only, never a live Docker client.
+
 ## Gotchas
 
 - Most tests need a Docker daemon. `tests/test_plugin.py` skips itself without one.
