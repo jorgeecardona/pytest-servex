@@ -78,7 +78,9 @@ class Container:
         alias: The DNS name other containers on the same networks use.
         ready: Returns True once the container accepts real work. Called in a loop until
             True or until the start timeout. Return False for "not yet"; do not raise.
-            The default treats a started container as ready.
+            The default treats a started container as ready. Speak the service's own
+            protocol (a query, a ``PING``, an HTTP request): Docker's port proxy accepts
+            TCP connections before the service listens, so a bare connect proves nothing.
         pull: When to pull the image, with the ``docker run --pull`` values: ``"missing"``
             (default), ``"always"``, ``"never"`` (raise ``ImageNotFound`` if not local).
         entrypoint: Replaces the image's entrypoint when not empty.

@@ -9,6 +9,7 @@ from pytest_servex.errors import (
     NotReady,
     ServexError,
 )
+from pytest_servex.fixtures import container_fixture
 from pytest_servex.lifecycle import remove_stale, running, start, stop
 from pytest_servex.postgres import POSTGRES, PostgresDatabase, PostgresServer
 from pytest_servex.spec import (
@@ -22,11 +23,14 @@ from pytest_servex.spec import (
     Tmpfs,
     Volume,
 )
+from pytest_servex.valkey import REDIS, VALKEY, ValkeyDatabase, ValkeyServer
 
-__version__ = "0.1.3"  # the single source of truth; pyproject reads it via [tool.hatch.version]
+__version__ = "0.2.0"  # the single source of truth; pyproject reads it via [tool.hatch.version]
 
 __all__ = [
     "POSTGRES",
+    "REDIS",
+    "VALKEY",
     "Conflict",
     "Container",
     "DockerError",
@@ -44,8 +48,11 @@ __all__ = [
     "RunningVolume",
     "ServexError",
     "Tmpfs",
+    "ValkeyDatabase",
+    "ValkeyServer",
     "Volume",
     "__version__",
+    "container_fixture",
     "remove_stale",
     "running",
     "start",

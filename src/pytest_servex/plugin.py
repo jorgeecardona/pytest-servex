@@ -1,4 +1,4 @@
-"""The pytest plugin: Postgres fixtures, one server per run and one database per worker.
+"""The pytest plugin: Postgres and Valkey fixtures, one server per run, one database per worker.
 
 Fixture graph::
 
@@ -15,15 +15,19 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable, Iterator
+from dataclasses import replace
 
 import pytest
 
-from pytest_servex import postgres
+from pytest_servex import postgres, valkey
 from pytest_servex.lifecycle import remove_stale, running
 from pytest_servex.postgres import PostgresDatabase, PostgresServer
+from pytest_servex.valkey import ValkeyDatabase, ValkeyServer
 
 ENV_URL = "SERVEX_POSTGRES_URL"
 ENV_IMAGE = "SERVEX_POSTGRES_IMAGE"
+ENV_VALKEY_URL = "SERVEX_VALKEY_URL"
+ENV_VALKEY_IMAGE = "SERVEX_VALKEY_IMAGE"
 TEMPLATE_NAME = "servex_template"
 WORKER_PREFIX = "servex"
 
@@ -110,3 +114,34 @@ def servex_postgres(
         yield database
     finally:
         postgres.drop(servex_postgres_server, name)
+
+
+@pytest.fixture(scope="session")
+def servex_valkey_server() -> Iterator[ValkeyServer]:
+    """The run's Valkey server.
+
+    If ``SERVEX_VALKEY_URL`` is set (``redis://[:password@]host:port``), that server is used
+    and nothing is started. Otherwise a container is started from ``SERVEX_VALKEY_IMAGE``
+    (default ``valkey/valkey:8-alpine``; a ``redis:`` image works too) and removed at the
+    end of the run.
+    """
+    if url := os.environ.get(ENV_VALKEY_URL):
+        yield ValkeyServer(url=url)
+        return
+    service = valkey.VALKEY
+    if image := os.environ.get(ENV_VALKEY_IMAGE):
+        binary = "redis-server" if "redis" in image.rsplit("/", 1)[-1] else "valkey-server"
+        service = replace(valkey.VALKEY, image=image, command=(binary, *valkey.VALKEY.command[1:]))
+    remove_stale()
+    with running(service) as started:
+        yield ValkeyServer(url=valkey.url_for(started.endpoint(valkey.PORT)))
+
+
+@pytest.fixture(scope="session")
+def servex_valkey(servex_valkey_server: ValkeyServer, worker_id: str) -> Iterator[ValkeyDatabase]:
+    """This worker's own database number, flushed at worker start and at worker end."""
+    database = valkey.claim(servex_valkey_server, valkey.worker_index(worker_id))
+    try:
+        yield database
+    finally:
+        valkey.claim(servex_valkey_server, database.index)

@@ -50,7 +50,42 @@ def servex_postgres_prepare():
     return prepare
 ```
 
-## How it works
+## Valkey and Redis
+
+Request `servex_valkey`. Each worker gets its own database number on one shared server, flushed
+when the worker starts and ends:
+
+```python
+import redis
+
+
+def test_cache(servex_valkey):
+    r = redis.Redis.from_url(servex_valkey.url)  # redis://127.0.0.1:32772/0
+    r.set("k", "v")
+```
+
+The container runs with persistence off and 128 databases. Set `SERVEX_VALKEY_IMAGE=redis:7-alpine`
+to test against Redis instead.
+
+## Any image
+
+`container_fixture` turns a `Container` into a session fixture. The variable name is the fixture
+name:
+
+```python
+from pytest_servex import Container, container_fixture
+
+api = container_fixture(Container(image="myorg/api:1.4", ports=(8080,), env={"MODE": "test"}))
+
+
+def test_health(api):
+    endpoint = api.endpoint(8080)  # Endpoint(host='127.0.0.1', port=32773)
+```
+
+Pass `ready=` to wait for the service. Speak its protocol (a query, a `PING`, an HTTP request):
+Docker accepts TCP connections on the published port before the service listens.
+
+## How Postgres works
 
 1. `servex_postgres_server` starts one Postgres container for the run, with `fsync` off and
    data on tmpfs.
@@ -96,6 +131,10 @@ Errors subclass the built-in they resemble, and all subclass `ServexError`:
 - `SERVEX_POSTGRES_URL`: use this server and start nothing (for example a CI service). It must
   point at a database whose user may create databases.
 - `SERVEX_POSTGRES_IMAGE`: the image to start. Default `postgres:17-alpine`.
+- `SERVEX_VALKEY_URL`: use this Valkey or Redis server and start nothing
+  (`redis://[:password@]host:port`). An external server has 16 databases by default, so at most
+  16 workers.
+- `SERVEX_VALKEY_IMAGE`: the image to start. Default `valkey/valkey:8-alpine`.
 - `DOCKER_HOST`: the Docker API, `unix://` or `tcp://`. Podman's Docker-compatible socket is
   meant to work but is not tested yet.
 - `SERVEX_HOST`: where tests connect to published ports, when that is not the `DOCKER_HOST`

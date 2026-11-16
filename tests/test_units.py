@@ -2,7 +2,7 @@
 
 import pytest
 
-from pytest_servex import errors, lifecycle, postgres
+from pytest_servex import errors, lifecycle, postgres, valkey
 from pytest_servex._engine import DockerHost, demux_logs
 from pytest_servex.postgres import PostgresDatabase
 from pytest_servex.spec import Container, Mount, Network, Tmpfs, Volume
@@ -155,3 +155,25 @@ def test_sqlalchemy_url() -> None:
     database = PostgresDatabase(name="d", url="postgresql://u:p@h:1/d")
     assert database.sqlalchemy_url() == "postgresql+psycopg://u:p@h:1/d"
     assert database.sqlalchemy_url("asyncpg") == "postgresql+asyncpg://u:p@h:1/d"
+
+
+def test_resp_encoding() -> None:
+    assert valkey.encode("SET", "k", "vé") == b"*3\r\n$3\r\nSET\r\n$1\r\nk\r\n$3\r\nv\xc3\xa9\r\n"
+
+
+@pytest.mark.parametrize(
+    ("worker", "index"), [("main", 0), ("master", 0), ("f0", 0), ("f3", 3), ("gw11", 11)]
+)
+def test_valkey_worker_index(worker: str, index: int) -> None:
+    assert valkey.worker_index(worker) == index
+
+
+def test_valkey_with_database_keeps_credentials() -> None:
+    assert valkey.with_database("redis://:pw@h:6379", 3) == "redis://:pw@h:6379/3"
+    assert valkey.with_database("redis://h:1/0", 5) == "redis://h:1/5"
+
+
+def test_redis_recipe_differs_only_in_image_and_binary() -> None:
+    assert valkey.REDIS.command[0] == "redis-server"
+    assert valkey.REDIS.command[1:] == valkey.VALKEY.command[1:]
+    assert "--databases" in valkey.VALKEY.command

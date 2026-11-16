@@ -1,6 +1,6 @@
 ---
 title: Add Redis and Valkey services with a database index per worker
-status: open
+status: done
 area: redis
 owner: null
 filed: 2026-11-16

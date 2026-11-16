@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `servex_valkey`: a Valkey database number for each worker on one shared server. `REDIS` recipe and `SERVEX_VALKEY_IMAGE` for Redis.
+- `container_fixture(Container(...))`: any image as a session fixture, started once per run.
+- `SERVEX_VALKEY_URL` uses an existing Valkey or Redis server instead of starting a container.
+
+## [0.1.3] - 2026-11-16
+
+### Added
+
 - `servex_postgres`: a Postgres database for each worker, copied from a template built once per run.
 - `servex_postgres_prepare`: override it to run migrations or insert seed data into the template.
 - `SERVEX_POSTGRES_URL` uses an existing server instead of starting a container.
