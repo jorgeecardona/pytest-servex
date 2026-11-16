@@ -15,7 +15,7 @@ from urllib.parse import quote, urlsplit, urlunsplit
 import psycopg
 from psycopg import sql
 
-from pytest_servex.service import Endpoint, Service
+from pytest_servex.spec import Container, Endpoint, RunningContainer, Tmpfs
 
 USER = "servex"
 PASSWORD = "servex"  # noqa: S105  # a throwaway container on 127.0.0.1
@@ -24,26 +24,29 @@ ADMIN_DATABASE = "postgres"
 _IDENTIFIER = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 
 
-def _ready(endpoint: Endpoint) -> bool:
+PORT = 5432
+FIRST_MAJOR_WITH_NEW_DATA_PATH = 18
+
+
+def _ready(started: RunningContainer) -> bool:
     """True once Postgres answers a query over TCP.
 
     The image runs ``initdb`` with a temporary server that does not listen on TCP, so a
     TCP connection only succeeds once the real server is up.
     """
     try:
-        with psycopg.connect(admin_url(endpoint), connect_timeout=1) as conn:
+        with psycopg.connect(admin_url(started.endpoint(PORT)), connect_timeout=1) as conn:
             conn.execute("SELECT 1")
     except psycopg.OperationalError:
         return False
     return True
 
 
-POSTGRES = Service(
-    name="postgres",
+POSTGRES = Container(
     image="postgres:17-alpine",
-    port=5432,
+    ports=(PORT,),
     ready=_ready,
-    env=(("POSTGRES_USER", USER), ("POSTGRES_PASSWORD", PASSWORD)),
+    env={"POSTGRES_USER": USER, "POSTGRES_PASSWORD": PASSWORD},
     # Durability settings off: test data never needs to survive a crash.
     command=(
         "postgres",
@@ -54,7 +57,7 @@ POSTGRES = Service(
         "-c",
         "full_page_writes=off",
     ),
-    tmpfs=("/var/lib/postgresql/data",),
+    mounts=(Tmpfs("/var/lib/postgresql/data"),),
 )
 
 
@@ -155,7 +158,7 @@ def worker_database_name(prefix: str, worker_id: str) -> str:
     return check_identifier(f"{prefix}_{safe}")
 
 
-def postgres_image(image: str) -> Service:
+def postgres_image(image: str) -> Container:
     """Return the Postgres service with another image, for example ``postgres:18``.
 
     Postgres 18 images keep data under ``/var/lib/postgresql`` instead of
@@ -163,5 +166,6 @@ def postgres_image(image: str) -> Service:
     """
     tag = image.rsplit(":", 1)[-1] if ":" in image else ""
     major = tag.split(".", 1)[0].split("-", 1)[0]
-    data = "/var/lib/postgresql" if major.isdigit() and int(major) >= 18 else POSTGRES.tmpfs[0]  # noqa: PLR2004
-    return replace(POSTGRES, image=image, tmpfs=(data,))
+    new_layout = major.isdigit() and int(major) >= FIRST_MAJOR_WITH_NEW_DATA_PATH
+    data = "/var/lib/postgresql" if new_layout else "/var/lib/postgresql/data"
+    return replace(POSTGRES, image=image, mounts=(Tmpfs(data),))

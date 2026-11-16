@@ -18,7 +18,8 @@ from collections.abc import Callable, Iterator
 
 import pytest
 
-from pytest_servex import _docker, postgres
+from pytest_servex import postgres
+from pytest_servex.lifecycle import remove_stale, running
 from pytest_servex.postgres import PostgresDatabase, PostgresServer
 
 ENV_URL = "SERVEX_POSTGRES_URL"
@@ -67,12 +68,9 @@ def servex_postgres_server() -> Iterator[PostgresServer]:
     service = postgres.POSTGRES
     if image := os.environ.get(ENV_IMAGE):
         service = postgres.postgres_image(image)
-    _docker.remove_stale_containers()
-    running = _docker.start(service)
-    try:
-        yield PostgresServer(url=postgres.admin_url(running.endpoint))
-    finally:
-        _docker.stop(running)
+    remove_stale()
+    with running(service) as started:
+        yield PostgresServer(url=postgres.admin_url(started.endpoint(postgres.PORT)))
 
 
 @pytest.fixture(scope="session")

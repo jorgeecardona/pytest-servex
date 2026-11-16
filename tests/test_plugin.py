@@ -3,25 +3,15 @@
 from __future__ import annotations
 
 import socket
+from typing import Any
 
-import docker
 import pytest
-from docker.errors import DockerException
 
-from pytest_servex import _docker
+from pytest_servex import lifecycle
+from pytest_servex._engine import Engine
+from tests.docker_available import needs_docker
 
-
-def _docker_available() -> bool:
-    try:
-        client = docker.from_env()
-        client.ping()
-        client.close()
-    except DockerException:
-        return False
-    return True
-
-
-pytestmark = pytest.mark.skipif(not _docker_available(), reason="needs a Docker daemon")
+pytestmark = needs_docker
 
 # The inner suite: prepare creates a table and records each call; every test inserts a row
 # and records which database it saw. Two tests seeing an empty table proves each worker
@@ -67,11 +57,11 @@ def test_insert(servex_postgres, n):
 
 
 def _servex_containers() -> int:
-    client = docker.from_env()
-    try:
-        return len(client.containers.list(filters={"label": _docker.LABEL}))
-    finally:
-        client.close()
+    with Engine() as engine:
+        found: list[Any] = engine.call(
+            "GET", "/containers/json", query={"filters": f'{{"label": ["{lifecycle.LABEL}"]}}'}
+        )
+    return len(found)
 
 
 def _run(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch, *args: str) -> list[str]:
@@ -109,21 +99,28 @@ def test_parallex_fork_shares_container_and_template(
         assert counts == list(range(len(counts)))  # each worker starts from the empty template
 
 
-def test_stale_container_of_dead_run_is_removed() -> None:
-    client = docker.from_env()
-    try:
-        dead = client.containers.run(
-            "alpine:3",
-            command=["sleep", "300"],
-            labels={
-                _docker.LABEL: "test",
-                _docker.LABEL_PID: "999999999",  # above pid_max: never a live process
-                _docker.LABEL_HOST: socket.gethostname(),
-            },
-            detach=True,
-            auto_remove=True,
+def test_objects_of_a_dead_run_are_removed() -> None:
+    dead = {
+        lifecycle.LABEL: "1",
+        lifecycle.LABEL_PID: "999999999",  # above pid_max: never a live process
+        lifecycle.LABEL_HOST: socket.gethostname(),
+    }
+    with Engine() as engine:
+        engine.call("POST", "/volumes/create", body={"Name": "servex_dead_v", "Labels": dead})
+        net = engine.call(
+            "POST", "/networks/create", body={"Name": "servex_dead_n", "Labels": dead}
         )
-        removed = _docker.remove_stale_containers()
-        assert dead.id in removed
-    finally:
-        client.close()
+        ctr = engine.call(
+            "POST",
+            "/containers/create",
+            body={"Image": "alpine:3", "Cmd": ["sleep", "300"], "Labels": dead},
+        )
+    assert lifecycle.remove_stale() >= 3
+    with Engine() as engine:
+        for path in (
+            f"/containers/{ctr['Id']}/json",
+            f"/networks/{net['Id']}",
+            "/volumes/servex_dead_v",
+        ):
+            with pytest.raises(LookupError):
+                engine.call("GET", path)

@@ -1,6 +1,6 @@
 ---
 title: Spec and running model for networks, volumes and containers
-status: open
+status: done
 area: core
 owner: null
 filed: 2026-11-16

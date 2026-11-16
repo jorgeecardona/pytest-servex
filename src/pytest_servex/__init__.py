@@ -1,17 +1,53 @@
 """Pytest fixtures that start test services in Docker once per run and give each worker its own database."""
 
-from pytest_servex._docker import ServiceStartError
+from pytest_servex.errors import (
+    Conflict,
+    DockerError,
+    DockerUnavailable,
+    ImageNotFound,
+    NotFound,
+    NotReady,
+    ServexError,
+)
+from pytest_servex.lifecycle import remove_stale, running, start, stop
 from pytest_servex.postgres import POSTGRES, PostgresDatabase, PostgresServer
-from pytest_servex.service import Endpoint, Service
+from pytest_servex.spec import (
+    Container,
+    Endpoint,
+    Mount,
+    Network,
+    RunningContainer,
+    RunningNetwork,
+    RunningVolume,
+    Tmpfs,
+    Volume,
+)
 
-__version__ = "0.1.0"  # the single source of truth; pyproject reads it via [tool.hatch.version]
+__version__ = "0.1.1"  # the single source of truth; pyproject reads it via [tool.hatch.version]
 
 __all__ = [
     "POSTGRES",
+    "Conflict",
+    "Container",
+    "DockerError",
+    "DockerUnavailable",
     "Endpoint",
+    "ImageNotFound",
+    "Mount",
+    "Network",
+    "NotFound",
+    "NotReady",
     "PostgresDatabase",
     "PostgresServer",
-    "Service",
-    "ServiceStartError",
+    "RunningContainer",
+    "RunningNetwork",
+    "RunningVolume",
+    "ServexError",
+    "Tmpfs",
+    "Volume",
     "__version__",
+    "remove_stale",
+    "running",
+    "start",
+    "stop",
 ]

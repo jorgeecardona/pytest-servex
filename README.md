@@ -14,7 +14,8 @@ database. Version 0.1 supports Postgres.
 pip install pytest-servex "psycopg[binary]"
 ```
 
-Requires Python 3.12+ and a Docker daemon (Podman's Docker-compatible socket works too).
+Requires Python 3.12+ and a Docker daemon. Talks to the Docker API directly with the standard
+library: no docker SDK, no requests.
 
 ## Quickstart
 
@@ -62,11 +63,42 @@ Under [pytest-parallex](https://pypi.org/project/pytest-parallex/) steps 1 and 2
 the controller, before the fork. Under pytest-xdist each worker runs its own session, so each
 worker starts its own container.
 
+## Outside pytest
+
+Specs are frozen dataclasses. `running` starts one on enter and removes it on exit, so nested
+blocks stop in reverse order:
+
+```python
+from dataclasses import replace
+
+from pytest_servex import POSTGRES, Network, running
+
+net = Network("app")
+pg = replace(POSTGRES, networks=(net,), alias="db", pull="never")
+
+with running(net), running(pg) as started:
+    print(started.endpoint(5432))  # Endpoint(host='127.0.0.1', port=32771)
+```
+
+Errors subclass the built-in they resemble, and all subclass `ServexError`:
+
+| Error | Also a | When |
+|---|---|---|
+| `NotReady` | `TimeoutError` | The ready check timed out, or the container exited first. Has `.logs`. |
+| `ImageNotFound` | `LookupError` | The image is missing and `pull="never"`, or the pull failed. |
+| `NotFound` | `LookupError` | Docker has no such object (HTTP 404). |
+| `Conflict` | | A name is taken, or a network or volume is still in use (HTTP 409). |
+| `DockerUnavailable` | `ConnectionError` | The Docker socket is missing or refuses connections. |
+
 ## Configuration
 
 - `SERVEX_POSTGRES_URL`: use this server and start nothing (for example a CI service). It must
   point at a database whose user may create databases.
 - `SERVEX_POSTGRES_IMAGE`: the image to start. Default `postgres:17-alpine`.
+- `DOCKER_HOST`: the Docker API, `unix://` or `tcp://`. Podman's Docker-compatible socket is
+  meant to work but is not tested yet.
+- `SERVEX_HOST`: where tests connect to published ports, when that is not the `DOCKER_HOST`
+  address (for example `docker` with a GitLab `docker:dind` service).
 
 ## Compared to testcontainers
 

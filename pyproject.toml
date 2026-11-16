@@ -20,7 +20,6 @@ classifiers = [
 ]
 dependencies = [
     "pytest>=8",
-    "docker>=7.1",
     # psycopg needs a libpq: install psycopg[binary] or psycopg[c] alongside, or have libpq.
     "psycopg>=3.2",
 ]
@@ -71,7 +70,7 @@ dev = [
     "pytest>=8",
     "psycopg[binary]>=3.2",
     "pytest-parallex>=0.2.6",
-    "types-docker>=7.2.0.20261102",
+    "musil>=0.36",
 ]
 
 [tool.pytest.ini_options]

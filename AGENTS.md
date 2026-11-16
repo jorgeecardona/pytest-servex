@@ -36,10 +36,12 @@ Jorge, 2026-11-16: the Zen of Python is the guide.
 
 ## Gotchas
 
-- Most tests need a Docker daemon. `tests/test_plugin.py` skips itself without one.
+- Most tests need a Docker daemon. They skip themselves without one (`tests/docker_available.py`).
+- `tests/test_flows.py` model-checks start, stop, crash and cleanup order with musil. Change it
+  when the lifecycle order changes.
 - Never keep a Docker client in a fixture value or module global. Under pytest-parallex the
   controller forks workers, and a shared client socket breaks. Open and close one per call
-  (see `_docker.py`).
+  (see `_engine.py`, which uses stdlib `http.client`; do not add the docker SDK).
 - Fixtures that must run once per worker request `worker_id`. That is how parallex knows not
   to build them in the controller.
 
