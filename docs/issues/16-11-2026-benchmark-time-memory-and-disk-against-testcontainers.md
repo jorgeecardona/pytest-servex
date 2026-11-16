@@ -26,3 +26,9 @@ the data counts as container memory.
 First numbers (2026-11-16, load average 31, not comparable): bare `docker run` of
 `postgres:17-alpine` ready in 12.4 s; `_docker.start` in 16.5 s, with 1.4 s of imports. At a
 lower load the full suite (two inner runs, each starting a container) took 8.8 s.
+
+Second numbers (2026-11-16 10:08, load average 46 to 48, not comparable): 3 starts each of
+`postgres:17-alpine`, seconds to ready. servex `running(POSTGRES)`: 11.68, 10.49, 6.40.
+testcontainers `PostgresContainer`: 9.43, 5.96, 5.88. servex is not faster yet under this load.
+Check first: the ready check opens a new psycopg connection every 50 ms, and the first start
+also pulls nothing, so the gap is in readiness or in Docker create/start, not in the pull.
