@@ -3,8 +3,8 @@ _commit: v0.2.0-1-gf3c3536
 _src_path: _starter
 author_email: jorgeecardona@gmail.com
 author_name: Jorge Cardona
-description: Pytest fixtures that start test services in Docker once per run and give each
-  worker its own database.
+description: Start Docker containers, networks and volumes from frozen dataclasses, in
+  pytest or plain Python, once per test run and shared by parallel workers.
 dist_name: pytest-servex
 gitlab_group: cardona-oss
 has_examples: false

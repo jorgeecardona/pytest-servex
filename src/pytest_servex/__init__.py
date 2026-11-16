@@ -1,4 +1,4 @@
-"""Pytest fixtures that start test services in Docker once per run and give each worker its own database."""
+"""Start Docker containers, networks and volumes from frozen dataclasses, in pytest or plain Python, once per test run and shared by parallel workers."""
 
 from pytest_servex.errors import (
     Conflict,
@@ -23,7 +23,7 @@ from pytest_servex.spec import (
     Volume,
 )
 
-__version__ = "0.1.1"  # the single source of truth; pyproject reads it via [tool.hatch.version]
+__version__ = "0.1.2"  # the single source of truth; pyproject reads it via [tool.hatch.version]
 
 __all__ = [
     "POSTGRES",

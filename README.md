@@ -5,8 +5,9 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/pytest-servex.svg)](https://pypi.org/project/pytest-servex/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/LICENSE)
 
-Pytest fixtures that start test services in Docker once per run and give each worker its own
-database. Version 0.1 supports Postgres.
+Start Docker containers, networks and volumes from frozen dataclasses, in pytest or plain Python,
+once per test run and shared by parallel workers. Any image works. Postgres has a ready-made recipe
+with one database per worker.
 
 ## Install
 

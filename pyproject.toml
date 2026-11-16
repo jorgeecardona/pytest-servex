@@ -1,7 +1,7 @@
 [project]
 name = "pytest-servex"
 dynamic = ["version"]  # the single source of truth is __version__ in src/pytest_servex/__init__.py (see [tool.hatch.version])
-description = "Pytest fixtures that start test services in Docker once per run and give each worker its own database."
+description = "Start Docker containers, networks and volumes from frozen dataclasses, in pytest or plain Python, once per test run and shared by parallel workers."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
