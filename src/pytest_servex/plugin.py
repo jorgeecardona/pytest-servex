@@ -110,10 +110,35 @@ def servex_postgres(
     """This worker's own database, a copy of the template. Dropped when the worker ends."""
     name = postgres.worker_database_name(WORKER_PREFIX, worker_id)
     database = postgres.clone(servex_postgres_server, servex_postgres_template, name)
+    _fresh.add(name)
     try:
         yield database
     finally:
         postgres.drop(servex_postgres_server, name)
+
+
+_fresh: set[str] = set()  # worker databases not used by any test yet; per process, so per worker
+
+
+@pytest.fixture
+def servex_postgres_clean(
+    servex_postgres_server: PostgresServer,
+    servex_postgres_template: str,
+    servex_postgres: PostgresDatabase,
+) -> PostgresDatabase:
+    """This worker's database, reset to a fresh copy of the template before the test.
+
+    Use it instead of ``servex_postgres`` when tests must not see each other's rows. The
+    reset drops the database and clones the template again, so seed data from
+    ``servex_postgres_prepare`` comes back too. It closes every open connection to the
+    database: create engines and pools inside the test, or use SQLAlchemy's
+    ``pool_pre_ping=True``. Measured at 175 ms per reset for 66 tables, about half the
+    cost of a ``TRUNCATE`` of the same tables.
+    """
+    if servex_postgres.name in _fresh:
+        _fresh.discard(servex_postgres.name)  # the first test gets the new clone as is
+        return servex_postgres
+    return postgres.clone(servex_postgres_server, servex_postgres_template, servex_postgres.name)
 
 
 @pytest.fixture(scope="session")

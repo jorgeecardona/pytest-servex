@@ -110,12 +110,8 @@ class PostgresDatabase:
 
 
 def _terminate_and_drop(conn: psycopg.Connection[Any], name: str) -> None:
-    conn.execute(
-        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
-        "WHERE datname = %s AND pid <> pg_backend_pid()",
-        (name,),
-    )
-    conn.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(name)))
+    # WITH (FORCE) closes other sessions on the database first (Postgres 13+).
+    conn.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(name)))
 
 
 def create_empty(server: PostgresServer, name: str) -> PostgresDatabase:

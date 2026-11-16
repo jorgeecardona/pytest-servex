@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `servex_postgres_clean`: a fresh copy of the template database before each test, seed rows included.
+
+## [0.3.0] - 2026-11-16
+
+### Added
+
 - `Bind(source, target)` mounts a host path into a container, read-only by default (#1).
 - `log_ready(pattern, times=1)` waits for a log line; `http_ready(port, path)` waits for an HTTP answer (#2).
 - `logs(started)` returns a running container's output.

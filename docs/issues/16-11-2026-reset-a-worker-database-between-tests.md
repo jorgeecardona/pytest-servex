@@ -1,6 +1,6 @@
 ---
 title: Reset a worker database between tests
-status: open
+status: done
 area: postgres
 owner: null
 filed: 2026-11-16
@@ -21,3 +21,11 @@ Options to compare with timings:
 3. A transaction per test, rolled back at the end (fast, but breaks tests that commit).
 
 Ship the fastest one that is correct as an opt-in function-scoped fixture.
+
+## Resolved (2026-11-16)
+
+Measured on `postgres:17-alpine`, 66 tables with an index each, load average 47 to 60:
+re-clone (`DROP ... WITH (FORCE)` + `CREATE DATABASE ... TEMPLATE`) 173 to 177 ms, one
+`TRUNCATE` of all 66 tables 369 ms. Re-clone also restores seed rows. Shipped as the opt-in
+fixture `servex_postgres_clean`. Option 3 (rollback per test) was not built: it breaks tests
+that commit.

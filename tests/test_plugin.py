@@ -124,3 +124,30 @@ def test_objects_of_a_dead_run_are_removed() -> None:
         ):
             with pytest.raises(LookupError):
                 engine.call("GET", path)
+
+
+INNER_CLEAN = """
+import psycopg
+import pytest
+
+
+@pytest.fixture(scope="session")
+def servex_postgres_prepare():
+    def prepare(url):
+        with psycopg.connect(url, autocommit=True) as conn:
+            conn.execute("CREATE TABLE item (id int)")
+            conn.execute("INSERT INTO item VALUES (1)")  # seed row
+    return prepare
+
+
+@pytest.mark.parametrize("n", range(3))
+def test_sees_only_the_seed(servex_postgres_clean, n):
+    with psycopg.connect(servex_postgres_clean.url, autocommit=True) as conn:
+        assert conn.execute("SELECT count(*) FROM item").fetchone()[0] == 1
+        conn.execute("INSERT INTO item VALUES (2)")
+"""
+
+
+def test_clean_fixture_resets_between_tests(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(test_inner=INNER_CLEAN)
+    pytester.runpytest_subprocess("-p", "no:parallex").assert_outcomes(passed=3)

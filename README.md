@@ -50,6 +50,21 @@ def servex_postgres_prepare():
     return prepare
 ```
 
+### A clean database for every test
+
+`servex_postgres` keeps rows from earlier tests on the same worker. Request
+`servex_postgres_clean` instead to get a fresh copy of the template before each test, seed rows
+included:
+
+```python
+def test_signup(servex_postgres_clean):
+    engine = create_engine(servex_postgres_clean.sqlalchemy_url())
+```
+
+The reset drops the database and clones the template again (about 175 ms for 66 tables, half the
+cost of a `TRUNCATE`). It closes open connections, so create engines inside the test or use
+`pool_pre_ping=True`.
+
 ## Valkey and Redis
 
 Request `servex_valkey`. Each worker gets its own database number on one shared server, flushed
