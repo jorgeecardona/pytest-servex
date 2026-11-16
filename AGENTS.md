@@ -1,0 +1,36 @@
+# AGENTS.md
+
+Guidance for AI coding agents working in this repo. Humans: read README.md and CHANGELOG.md.
+
+## Overview
+
+pytest-servex: Pytest fixtures that start test services in Docker once per run and give each worker its own database.
+
+## Build
+
+- `uv sync` installs dependencies. Toolchain (moon, uv) is pinned in `.prototools`; `proto install` brings it up.
+- `make install-hooks` once, to enable the tracked git hooks.
+
+## Test
+
+- `make test` runs the suite.
+- `make check` runs lint + typecheck + test (the same stage CI runs via `moon run :ci`).
+- Everything in `make check` must pass before you commit.
+
+## Style
+
+- Format and autofix: `make format` (ruff, line length 100).
+- Lint: `make lint`. Types: `make typecheck` (pyright strict on `src/`).
+- Prefer frozen dataclasses and explicit types. Keep the public API typed (`py.typed`).
+
+## Gotchas
+
+- Most tests need a Docker daemon. `tests/test_plugin.py` skips itself without one.
+- Never keep a Docker client in a fixture value or module global. Under pytest-parallex the
+  controller forks workers, and a shared client socket breaks. Open and close one per call
+  (see `_docker.py`).
+- Fixtures that must run once per worker request `worker_id`. That is how parallex knows not
+  to build them in the controller.
+
+- Version lives as `__version__` in `src/pytest_servex/__init__.py`; `pyproject.toml` reads it via `[tool.hatch.version]` (`version` is `dynamic`). The pre-commit hook auto-bumps it when `src/` changes. Do not edit versions by hand elsewhere.
+- Record follow-ups in `docs/issues/`, not as scattered TODO comments.

@@ -1,0 +1,16 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v0.2.0-1-gf3c3536
+_src_path: _starter
+author_email: jorgeecardona@gmail.com
+author_name: Jorge Cardona
+description: Pytest fixtures that start test services in Docker once per run and give each
+  worker its own database.
+dist_name: pytest-servex
+gitlab_group: cardona-oss
+has_examples: false
+has_rust: false
+import_package: pytest_servex
+license_year: 2026
+project_slug: pytest-servex
+python_floor: '3.12'
+test_dir: tests
