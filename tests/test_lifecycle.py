@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import time
 import uuid
+from pathlib import Path
 
 import pytest
 
 from pytest_servex import (
+    Bind,
     Container,
     DockerUnavailable,
     ImageNotFound,
@@ -16,6 +18,9 @@ from pytest_servex import (
     NotReady,
     Tmpfs,
     Volume,
+    http_ready,
+    log_ready,
+    logs,
     running,
 )
 from pytest_servex._engine import DockerHost, Engine
@@ -83,3 +88,32 @@ def test_missing_socket_raises_docker_unavailable() -> None:
     nowhere = DockerHost("unix", "/nonexistent/docker.sock", 0, "127.0.0.1")
     with pytest.raises(DockerUnavailable), Engine(nowhere) as engine:
         engine.call("GET", "/_ping")
+
+
+@needs_docker
+def test_bind_mount_and_log_ready(tmp_path: Path) -> None:
+    (tmp_path / "hello.txt").write_text("from-the-host\n")
+    reader = Container(
+        image="alpine:3",
+        command=("sh", "-c", "cat /data/hello.txt; echo up; echo up; sleep 300"),
+        mounts=(Bind(str(tmp_path), "/data"),),
+        ready=log_ready("^up$", times=2),
+    )
+    with running(reader, timeout=30) as started:
+        assert "from-the-host" in logs(started)
+
+
+@needs_docker
+def test_http_ready() -> None:
+    web = Container(
+        image="alpine:3",
+        command=(
+            "sh",
+            "-c",
+            "while true; do printf 'HTTP/1.0 404 Not Found\\r\\n\\r\\n' | nc -l -p 8080; done",
+        ),
+        ports=(8080,),
+        ready=http_ready(8080),  # a 404 still means the server is up
+    )
+    with running(web, timeout=30) as started:
+        assert started.endpoint(8080).port > 0

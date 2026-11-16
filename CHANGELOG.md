@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Bind(source, target)` mounts a host path into a container, read-only by default (#1).
+- `log_ready(pattern, times=1)` waits for a log line; `http_ready(port, path)` waits for an HTTP answer (#2).
+- `logs(started)` returns a running container's output.
+
+## [0.2.0] - 2026-11-16
+
+### Added
+
 - `servex_valkey`: a Valkey database number for each worker on one shared server. `REDIS` recipe and `SERVEX_VALKEY_IMAGE` for Redis.
 - `container_fixture(Container(...))`: any image as a session fixture, started once per run.
 - `SERVEX_VALKEY_URL` uses an existing Valkey or Redis server instead of starting a container.

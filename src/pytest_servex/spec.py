@@ -50,6 +50,20 @@ class Mount:
 
 
 @dataclass(frozen=True)
+class Bind:
+    """Mount host path ``source`` at ``target`` inside a container. Read-only by default.
+
+    ``source`` is a path on the machine that runs the Docker daemon (with a remote
+    ``DOCKER_HOST``, that is not the test machine). A relative path is made absolute
+    against the current directory. (#1)
+    """
+
+    source: str
+    target: str
+    read_only: bool = True
+
+
+@dataclass(frozen=True)
 class Tmpfs:
     """A tmpfs at ``target`` inside a container: data in memory, nothing written to disk.
 
@@ -73,7 +87,7 @@ class Container:
         ports: Container ports to publish on random host ports.
         env: Environment variables. Stored sorted and read-only.
         command: Replaces the image's default command when not empty.
-        mounts: ``Tmpfs`` and ``Mount`` entries.
+        mounts: ``Tmpfs``, ``Mount`` (named volume), and ``Bind`` (host path) entries.
         networks: Networks to join. Start them first.
         alias: The DNS name other containers on the same networks use.
         ready: Returns True once the container accepts real work. Called in a loop until
@@ -96,7 +110,7 @@ class Container:
     ports: tuple[int, ...] = ()
     env: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
     command: tuple[str, ...] = ()
-    mounts: tuple[Tmpfs | Mount, ...] = ()
+    mounts: tuple[Tmpfs | Mount | Bind, ...] = ()
     networks: tuple[Network, ...] = ()
     alias: str = ""
     ready: Callable[[RunningContainer], bool] = _never_ready

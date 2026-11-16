@@ -5,7 +5,7 @@ import pytest
 from pytest_servex import errors, lifecycle, postgres, valkey
 from pytest_servex._engine import DockerHost, demux_logs
 from pytest_servex.postgres import PostgresDatabase
-from pytest_servex.spec import Container, Mount, Network, Tmpfs, Volume
+from pytest_servex.spec import Bind, Container, Mount, Network, Tmpfs, Volume
 
 
 @pytest.mark.parametrize(
@@ -177,3 +177,15 @@ def test_redis_recipe_differs_only_in_image_and_binary() -> None:
     assert valkey.REDIS.command[0] == "redis-server"
     assert valkey.REDIS.command[1:] == valkey.VALKEY.command[1:]
     assert "--databases" in valkey.VALKEY.command
+
+
+def test_bind_mount_body_is_absolute_and_read_only_by_default() -> None:
+    spec = Container(
+        image="x", mounts=(Bind("certs", "/auth"), Bind("/srv/w", "/w", read_only=False))
+    )
+    mounts = lifecycle.container_create_body(spec, {}, "127.0.0.1")["HostConfig"]["Mounts"]
+    assert mounts[0]["Type"] == "bind"
+    assert mounts[0]["Source"].startswith("/")
+    assert mounts[0]["Source"].endswith("/certs")
+    assert mounts[0]["ReadOnly"] is True
+    assert mounts[1] == {"Type": "bind", "Source": "/srv/w", "Target": "/w", "ReadOnly": False}

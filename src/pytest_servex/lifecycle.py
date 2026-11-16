@@ -13,11 +13,13 @@ import socket
 import time
 from collections.abc import Generator
 from contextlib import AbstractContextManager, contextmanager
+from pathlib import Path
 from typing import Any, overload
 
 from pytest_servex._engine import Engine, demux_logs
 from pytest_servex.errors import DockerError, ImageNotFound, NotFound, NotReady
 from pytest_servex.spec import (
+    Bind,
     Container,
     Mount,
     Network,
@@ -60,11 +62,7 @@ def container_create_body(
     host_config: dict[str, Any] = {
         "PortBindings": {f"{p}/tcp": [{"HostIp": publish_ip, "HostPort": ""}] for p in spec.ports},
         "Tmpfs": {m.target: m.options for m in spec.mounts if isinstance(m, Tmpfs)},
-        "Mounts": [
-            {"Type": "volume", "Source": m.volume.name, "Target": m.target}
-            for m in spec.mounts
-            if isinstance(m, Mount)
-        ],
+        "Mounts": [_mount_body(m) for m in spec.mounts if isinstance(m, Mount | Bind)],
     }
     body: dict[str, Any] = {
         "Image": spec.image,
@@ -91,6 +89,17 @@ def container_create_body(
         host_config["NetworkMode"] = first
         body["NetworkingConfig"] = {"EndpointsConfig": {first: _endpoint_config(spec)}}
     return body
+
+
+def _mount_body(mount: Mount | Bind) -> dict[str, Any]:
+    if isinstance(mount, Mount):
+        return {"Type": "volume", "Source": mount.volume.name, "Target": mount.target}
+    return {
+        "Type": "bind",
+        "Source": str(Path(mount.source).resolve()),
+        "Target": mount.target,
+        "ReadOnly": mount.read_only,
+    }
 
 
 def _endpoint_config(spec: Container) -> dict[str, Any]:
@@ -181,6 +190,13 @@ def _wait_ready(engine: Engine, started: RunningContainer, timeout: float) -> No
             )
             raise NotReady(started.spec.image, reason, demux_logs(raw))
         time.sleep(POLL)
+
+
+def logs(started: RunningContainer, *, tail: int | None = None) -> str:
+    """Return the container's stdout and stderr as text, the last ``tail`` lines if given."""
+    query = {"stdout": "1", "stderr": "1", "tail": "all" if tail is None else str(tail)}
+    with Engine() as engine:
+        return demux_logs(engine.raw("GET", f"/containers/{started.id}/logs", query=query))
 
 
 def _remove_container(engine: Engine, container_id: str) -> None:

@@ -83,7 +83,20 @@ def test_health(api):
 ```
 
 Pass `ready=` to wait for the service. Speak its protocol (a query, a `PING`, an HTTP request):
-Docker accepts TCP connections on the published port before the service listens.
+Docker accepts TCP connections on the published port before the service listens. Two checks are
+built in:
+
+```python
+from pytest_servex import Bind, Container, http_ready, log_ready
+
+registry = Container(
+    image="registry:2",
+    ports=(5000,),
+    mounts=(Bind("tests/certs", "/auth"),),  # host path, read-only by default
+    ready=http_ready(5000, "/v2/"),  # any answer below 500 counts, 401 included
+)
+worker = Container(image="myorg/worker:2", ready=log_ready("listening on"))
+```
 
 ## How Postgres works
 
