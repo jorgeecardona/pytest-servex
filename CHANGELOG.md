@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `servex_postgres_clean`: a fresh copy of the template database before each test, seed rows included.
+- `refresh(started)` returns the container with the ports Docker publishes now. Use it after a restart, which gives new host ports (#3).
+
+### Documented
+
+- The Postgres data directory is on tmpfs, so a restart starts a new empty database. Use `replace(POSTGRES, mounts=())` to keep data across a restart (#3).
 
 ## [0.3.0] - 2026-11-16
 

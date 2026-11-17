@@ -59,6 +59,11 @@ POSTGRES = Container(
     ),
     mounts=(Tmpfs("/var/lib/postgresql/data"),),
 )
+"""Postgres with durability off and data on tmpfs.
+
+Docker empties tmpfs when the container stops, so a restart starts a new empty database. Use
+``replace(POSTGRES, mounts=())`` to keep data across a restart (#3).
+"""
 
 
 def admin_url(endpoint: Endpoint) -> str:

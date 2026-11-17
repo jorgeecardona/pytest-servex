@@ -142,6 +142,30 @@ def _create_container(engine: Engine, spec: Container) -> str:
     return str(created["Id"])
 
 
+def _inspect(engine: Engine, container_id: str, spec: Container) -> RunningContainer:
+    """Read the container's current published ports from Docker."""
+    info = engine.call("GET", f"/containers/{container_id}/json")
+    bound: dict[str, list[dict[str, str]]] = info["NetworkSettings"]["Ports"] or {}
+    ports = tuple(sorted((p, int(bound[f"{p}/tcp"][0]["HostPort"])) for p in spec.ports))
+    return RunningContainer(
+        id=container_id, spec=spec, host=engine.host.published_host, ports=ports
+    )
+
+
+def refresh(started: RunningContainer) -> RunningContainer:
+    """Return ``started`` with the ports Docker publishes now.
+
+    A restart gives the container new host ports, and ``started`` keeps the old ones. Call
+    this after a restart, then use ``endpoint`` on the result.
+
+    Raises:
+        NotFound: The container is gone.
+        KeyError: The container is stopped, so Docker publishes no ports.
+    """
+    with Engine() as engine:
+        return _inspect(engine, started.id, started.spec)
+
+
 def _start_container(engine: Engine, spec: Container, timeout: float) -> RunningContainer:
     container_id = _create_container(engine, spec)
     try:
@@ -152,12 +176,7 @@ def _start_container(engine: Engine, spec: Container, timeout: float) -> Running
                 body={"Container": container_id, "EndpointConfig": _endpoint_config(spec)},
             )
         engine.call("POST", f"/containers/{container_id}/start")
-        info = engine.call("GET", f"/containers/{container_id}/json")
-        bound: dict[str, list[dict[str, str]]] = info["NetworkSettings"]["Ports"] or {}
-        ports = tuple(sorted((p, int(bound[f"{p}/tcp"][0]["HostPort"])) for p in spec.ports))
-        started = RunningContainer(
-            id=container_id, spec=spec, host=engine.host.published_host, ports=ports
-        )
+        started = _inspect(engine, container_id, spec)
         _wait_ready(engine, started, timeout)
     except BaseException:
         _remove_container(engine, container_id)

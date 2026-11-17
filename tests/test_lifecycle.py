@@ -21,6 +21,7 @@ from pytest_servex import (
     http_ready,
     log_ready,
     logs,
+    refresh,
     running,
 )
 from pytest_servex._engine import DockerHost, Engine
@@ -117,3 +118,15 @@ def test_http_ready() -> None:
     )
     with running(web, timeout=30) as started:
         assert started.endpoint(8080).port > 0
+
+
+@needs_docker
+def test_refresh_follows_the_port_after_a_restart() -> None:
+    box = Container(image="alpine:3", ports=(8080,), command=("sleep", "300"))
+    with running(box, timeout=30) as started, Engine() as engine:
+        engine.call("POST", f"/containers/{started.id}/restart", query={"t": "0"})
+        info = engine.call("GET", f"/containers/{started.id}/json")
+        live = int(info["NetworkSettings"]["Ports"]["8080/tcp"][0]["HostPort"])
+        current = refresh(started)
+        assert current.endpoint(8080).port == live
+        assert (current.id, current.spec) == (started.id, started.spec)

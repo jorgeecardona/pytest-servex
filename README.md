@@ -113,6 +113,22 @@ registry = Container(
 worker = Container(image="myorg/worker:2", ready=log_ready("listening on"))
 ```
 
+### Restarting a container
+
+A restart gives the container new host ports, and `started` keeps the old ones. Call `refresh`
+after the restart:
+
+```python
+from pytest_servex import refresh
+
+started = refresh(started)
+started.endpoint(5432)  # the port Docker publishes now
+```
+
+The Postgres data directory is on tmpfs, and Docker empties tmpfs when a container stops. A restart
+starts a new empty database and loses `ALTER SYSTEM` settings. To keep data across a restart, drop
+the tmpfs with `replace(POSTGRES, mounts=())`.
+
 ## How Postgres works
 
 1. `servex_postgres_server` starts one Postgres container for the run, with `fsync` off and
