@@ -1,0 +1,9 @@
+# prodc.toml: product needs for pytest-servex. Run: prodc status
+
+[prodc]
+needs = ["product/needs/*.yaml"]
+
+[proofs.test]
+kind = "pytest"
+root = "."
+results = "build/junit.xml"

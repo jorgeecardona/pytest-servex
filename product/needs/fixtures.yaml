@@ -1,0 +1,100 @@
+who: developer writing tests that need Docker containers in Python
+
+needs:
+
+  - id: SX-1
+    text: >
+      When the developer requests servex_postgres in a test, they can get a worker-isolated
+      Postgres database without writing any setup code.
+    must: true
+    sources:
+      - {kind: secondary, date: 2026-11-21, locator: "README.md#quickstart"}
+    proofs:
+      - "test:tests/test_plugin.py::test_insert"
+
+  - id: SX-2
+    text: >
+      When the developer requests servex_postgres_clean, they can get a fresh copy of the
+      template database before each test so no rows from prior tests are visible.
+    must: true
+    sources:
+      - {kind: secondary, date: 2026-11-21, locator: "README.md#a-clean-database-for-every-test"}
+    proofs:
+      - "test:tests/test_plugin.py::test_sees_only_the_seed"
+      - "test:tests/test_plugin.py::test_clean_fixture_resets_between_tests"
+
+  - id: SX-3
+    text: >
+      When the developer requests servex_valkey, they can get a worker-isolated Valkey or
+      Redis database number, flushed before the worker starts.
+    must: true
+    sources:
+      - {kind: secondary, date: 2026-11-21, locator: "README.md#valkey-and-redis"}
+    proofs:
+      - "test:tests/test_valkey.py::test_isolated"
+      - "test:tests/test_valkey.py::test_valkey_workers_get_their_own_database"
+
+  - id: SX-4
+    text: >
+      When the developer uses container_fixture, they can turn any Docker image into a
+      session-scoped pytest fixture with a single call.
+    must: true
+    sources:
+      - {kind: secondary, date: 2026-11-21, locator: "README.md#any-image"}
+    proofs:
+      - "test:tests/test_valkey.py::test_generic_fixture_starts_once_per_run"
+
+  - id: SX-5
+    text: >
+      When the developer uses running outside pytest, they can start and stop containers
+      with a context manager and have them removed in reverse order.
+    sources:
+      - {kind: secondary, date: 2026-11-21, locator: "README.md#outside-pytest"}
+    proofs:
+      - "test:tests/test_lifecycle.py::test_network_volume_and_container_flow"
+
+  - id: SX-6
+    text: >
+      When the developer passes a ready check to a container, they can wait for the service
+      to be reachable by HTTP response or log line before tests run.
+    sources:
+      - {kind: secondary, date: 2026-11-21, locator: "README.md#any-image"}
+    proofs:
+      - "test:tests/test_lifecycle.py::test_bind_mount_and_log_ready"
+      - "test:tests/test_lifecycle.py::test_http_ready"
+
+  - id: SX-7
+    text: >
+      When a previous test run was killed, the developer can start a new run and have
+      stale containers from the dead run removed automatically.
+    sources:
+      - {kind: secondary, date: 2026-11-21, locator: "README.md#compared-to-testcontainers"}
+    proofs:
+      - "test:tests/test_plugin.py::test_objects_of_a_dead_run_are_removed"
+
+  - id: SX-8
+    text: >
+      When the developer uses servex_postgres with pytest-parallex, they can run migrations
+      once on a template and get per-worker databases cloned from it in milliseconds.
+    sources:
+      - {kind: secondary, date: 2026-11-21, locator: "README.md#how-postgres-works"}
+    proofs:
+      - "test:tests/test_plugin.py::test_serial_run_uses_one_database"
+      - "test:tests/test_plugin.py::test_parallex_fork_shares_container_and_template"
+
+  - id: SX-9
+    text: >
+      When the developer sets SERVEX_POSTGRES_URL or SERVEX_VALKEY_URL, they can point
+      the fixtures at an existing service and start no containers.
+    sources:
+      - {kind: secondary, date: 2026-11-21, locator: "README.md#configuration"}
+    proofs: []
+
+  - id: SX-10
+    text: >
+      When the developer restarts a container during a test, they can call refresh to get
+      the updated host ports that Docker published after the restart.
+    sources:
+      - {kind: secondary, date: 2026-11-21, locator: "README.md#restarting-a-container"}
+    proofs:
+      - "test:tests/test_lifecycle.py::test_refresh_follows_the_port_after_a_restart"
