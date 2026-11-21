@@ -132,8 +132,11 @@ def servex_postgres_clean(
     reset drops the database and clones the template again, so seed data from
     ``servex_postgres_prepare`` comes back too. It closes every open connection to the
     database: create engines and pools inside the test, or use SQLAlchemy's
-    ``pool_pre_ping=True``. Measured at 175 ms per reset for 66 tables, about half the
-    cost of a ``TRUNCATE`` of the same tables.
+    ``pool_pre_ping=True``.
+
+    One measurement (``postgres:17-alpine``, a loaded machine, 2026-11-16): 175 ms per
+    reset against 369 ms for one ``TRUNCATE`` of the same 66 tables. See
+    ``docs/issues/16-11-2026-reset-a-worker-database-between-tests.md``.
     """
     if servex_postgres.name in _fresh:
         _fresh.discard(servex_postgres.name)  # the first test gets the new clone as is

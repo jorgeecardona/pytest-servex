@@ -1,19 +1,20 @@
 [project]
 name = "pytest-servex"
 dynamic = ["version"]  # the single source of truth is __version__ in src/pytest_servex/__init__.py (see [tool.hatch.version])
-description = "Starts the Docker containers your tests need, once per test run, and shares them with all workers."
+description = "pytest plugin that starts the Docker containers your tests need, with one database per worker"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Jorge Cardona", email = "jorgeecardona@gmail.com" }]
-keywords = ["pytest", "docker", "postgres", "testing", "fixtures", "parallel"]
+keywords = ["pytest", "docker", "postgres", "valkey", "redis", "testing", "fixtures", "parallel"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Framework :: Pytest",
     "Topic :: Software Development :: Testing",
     "Typing :: Typed",
@@ -35,7 +36,6 @@ docs = [
 [project.urls]
 Homepage = "https://gitlab.com/cardona-oss/pytest-servex"
 Repository = "https://gitlab.com/cardona-oss/pytest-servex"
-Documentation = "https://cardona-oss.gitlab.io/pytest-servex/"
 Changelog = "https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/CHANGELOG.md"
 Issues = "https://gitlab.com/cardona-oss/pytest-servex/-/issues"
 

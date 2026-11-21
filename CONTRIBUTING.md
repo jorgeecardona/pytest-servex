@@ -1,22 +1,22 @@
 # Contributing to pytest-servex
 
 Developer and maintainer notes: toolchain, the dev loop, CI, and the release process. (Package
-*users* need none of this — see the [README](README.md) for what pytest-servex does and how
+*users* need none of this. See the [README](README.md) for what pytest-servex does and how
 to use it.)
 
 ## Contributing with an AI agent
 
-Most changes here will be written with a coding agent — that's expected and welcome. To get a good
-result from yours:
+Most changes here will be written with a coding agent. That is expected and welcome. To get a
+good result from yours:
 
-- **Point it at [`AGENTS.md`](AGENTS.md) first** — the machine-facing contract for this repo: build
-  and test commands, the typed-API and style rules, and the repo-specific gotchas. Agents read it
-  automatically when started from the repo root.
-- **Ship a green `make check`** (lint + typecheck + test). Have the agent run it and fix what it
-  finds *before* opening the MR, not leave it for review.
-- **Don't let it bypass the hooks.** The patch version auto-bumps on `src/` changes and CI's
-  version-guard enforces it; a `--no-verify` commit fails the pipeline.
-- **Keep the diff small and typed** (pyright runs strict), add a `CHANGELOG.md` entry, and don't
+- Point it at [`AGENTS.md`](AGENTS.md) first. It has the build and test commands, the typed-API
+  and style rules, and the gotchas of this repo. Agents read it automatically when started from
+  the repo root.
+- Ship a green `make check` (lint + format-check + typecheck + test). Have the agent run it and
+  fix what it finds before opening the MR.
+- Do not let it bypass the hooks. The patch version auto-bumps on `src/` changes and CI's
+  version-guard checks it. A `--no-verify` commit fails the pipeline.
+- Keep the diff small and typed (pyright runs strict), add a `CHANGELOG.md` entry, and do not
   reformat unrelated files.
 
 ## Development & CI
@@ -35,40 +35,44 @@ The dev loop (thin `make` aliases over the moon tasks, so `make` runs exactly wh
 
 ```bash
 make format            # auto-format + autofix lint (ruff, line length 100)
-make check             # the full test stage: lint + typecheck + test
+make check             # the full test stage: lint + format-check + typecheck + test
 make docs              # build the docs site strictly (as CI / the pages job do)
 ```
 
-CI is a single GitLab job: `proto install` brings up the toolchain, then one `moon run :ci`
-resolves the whole graph (lint, typecheck, test, build, docs, version-guard) — there are no
-per-language jobs or hand-wired stages. moon owns task ordering, so run tasks through `make` or
-`moon run`, never by hand-wiring them.
+CI has two GitLab jobs. `ci` runs `proto install` for the toolchain, then one `moon run :ci`
+for the whole graph (lint, format-check, typecheck, test, test-floor, build, docs, version-guard,
+version-ahead). `pages` runs on `main` only and publishes the site that `ci` built.
+
+There are no per-language jobs or hand-wired stages. moon orders the tasks, so run them through
+`make` or `moon run`.
 
 ## Versioning
 
-The version lives as `__version__` in `src/pytest_servex/__init__.py` — the single source of
-truth, which `pyproject.toml` reads via `[tool.hatch.version]` (its `version` is `dynamic`, so there
-is no second copy to drift). Do not edit it by hand: the pre-commit hook auto-bumps the patch version when anything under `src/` changes,
-and CI's `version-guard` enforces non-bypassably that a `src/` change carries a bump (catching
-`--no-verify` commits and unhooked clones); `version-ahead` additionally enforces that the version
-is strictly greater than `origin/main`. For an intentional minor/major release, bump deliberately:
-`make bump TYPE=minor`.
+The version is `__version__` in `src/pytest_servex/__init__.py`. `pyproject.toml` reads it via
+`[tool.hatch.version]` (its `version` is `dynamic`), so there is no second copy.
+
+Do not edit it by hand. The pre-commit hook bumps the patch version when a `.py` file under
+`src/` changes. CI's `version-guard` fails when a `src/` change has no bump, which catches
+`--no-verify` commits and clones without hooks. `version-ahead` fails unless the version is
+greater than the one on `origin/main`.
+
+For a minor or major release, bump by hand: `make bump TYPE=minor`.
 
 ## Releasing
 
-Releases are automated — there is no manual tag or publish step:
+Releases are automated. There is no manual tag or publish step:
 
-1. **`pre-commit` auto-bumps** the patch version on any `src/` change (`make install-hooks` once
-   after cloning). Doc/test/example/config-only commits don't bump.
-2. **`version-guard`** (part of `:ci`) enforces the same rule in CI.
-3. **`:release`** runs on a green `main` pipeline (after the full `:ci` graph as deps): if the
-   package version isn't on PyPI yet, it publishes via OIDC Trusted Publishing. So merging a
-   version bump to `main` releases itself — no second pipeline, no tag required.
+1. `pre-commit` bumps the patch version on any `src/` change (`make install-hooks` once after
+   cloning). Commits that change only docs, tests, examples or config do not bump.
+2. `version-guard` (part of `:ci`) checks the same rule in CI.
+3. `:release` runs on a green `main` pipeline, after the full `:ci` graph. If the package version
+   is not on PyPI yet, it publishes via OIDC Trusted Publishing. A version bump merged to `main`
+   is released by that same pipeline, with no tag.
 
 ### One-time setup
 
-**PyPI — OIDC Trusted Publishing** (no API token is stored anywhere). PyPI account →
-Publishing → add a *pending* GitLab publisher (or add it to the project after the first manual
+PyPI uses OIDC Trusted Publishing: no API token is stored anywhere. In the PyPI account, open
+Publishing and add a *pending* GitLab publisher (or add it to the project after the first manual
 upload):
 
 | Field | Value |
@@ -79,8 +83,7 @@ upload):
 | Top-level pipeline file | `.gitlab-ci.yml` |
 | Environment name | `pypi` |
 
-Pushes and MRs run lint + typecheck + test + build + docs only; publishing happens only from a
-green `main`.
+Pushes and MRs run the `:ci` graph only. Publishing happens only from a green `main`.
 
 ## License
 

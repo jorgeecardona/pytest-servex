@@ -1,5 +1,5 @@
 site_name: pytest-servex
-site_description: Starts the Docker containers your tests need, once per test run, and shares them with all workers.
+site_description: A pytest plugin that starts the Docker containers your tests need, with one database per worker.
 repo_url: https://gitlab.com/cardona-oss/pytest-servex
 repo_name: cardona-oss/pytest-servex
 copyright: MIT &copy; Jorge Cardona

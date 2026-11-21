@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
 #
-# pytest-servex — Starts the Docker containers your tests need, once per test run, and shares them with all workers.
+# pytest-servex: pytest plugin that starts the Docker containers your tests need.
 # Single project at the repo root. Every task runs as a system command via `uv run`
 # (see .moon/toolchain.yml for why moon's Python toolchain is not used). CI runs one
 # `moon run :ci` (lint, format-check, typecheck, test, test-floor, build, docs,

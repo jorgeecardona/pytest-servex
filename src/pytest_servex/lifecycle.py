@@ -239,7 +239,7 @@ def start(spec: Spec, *, timeout: float = 60.0) -> Running:
     Raises:
         NotReady: The container was not ready within ``timeout`` seconds. It is removed
             before raising, and the error carries its last 40 log lines.
-        ImageNotFound: The image is missing and the pull policy or the pull failed.
+        ImageNotFound: The image is missing and ``pull`` is not ``"missing"``, or the pull failed.
         Conflict: A network or volume with that name exists already.
         DockerUnavailable: The Docker API cannot be reached.
     """

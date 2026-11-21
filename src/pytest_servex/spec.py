@@ -74,7 +74,7 @@ class Tmpfs:
     options: str = ""
 
 
-def _never_ready(_: RunningContainer) -> bool:
+def _always_ready(_: RunningContainer) -> bool:
     return True
 
 
@@ -113,7 +113,7 @@ class Container:
     mounts: tuple[Tmpfs | Mount | Bind, ...] = ()
     networks: tuple[Network, ...] = ()
     alias: str = ""
-    ready: Callable[[RunningContainer], bool] = _never_ready
+    ready: Callable[[RunningContainer], bool] = _always_ready
     pull: Pull = "missing"
     entrypoint: tuple[str, ...] = ()
     user: str = ""

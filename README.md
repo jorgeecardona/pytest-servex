@@ -1,13 +1,37 @@
-# pytest-servex
+<h1 align="center">pytest-servex</h1>
 
-[![pipeline status](https://gitlab.com/cardona-oss/pytest-servex/badges/main/pipeline.svg)](https://gitlab.com/cardona-oss/pytest-servex/-/pipelines)
-[![PyPI version](https://img.shields.io/pypi/v/pytest-servex.svg)](https://pypi.org/project/pytest-servex/)
-[![Python versions](https://img.shields.io/pypi/pyversions/pytest-servex.svg)](https://pypi.org/project/pytest-servex/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/LICENSE)
+<p align="center"><strong>Start the Docker containers your tests need from a pytest fixture, with a separate database for each parallel worker.</strong></p>
 
-Starts the Docker containers your tests need, once per test run, and shares them with all workers.
-Any image works, in pytest or plain Python. Postgres has a ready-made recipe with one database per
-worker.
+<p align="center">
+  <a href="https://pypi.org/project/pytest-servex/"><img alt="PyPI" src="https://img.shields.io/pypi/v/pytest-servex?style=flat-square"></a>
+  <a href="https://pypi.org/project/pytest-servex/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/pytest-servex?style=flat-square"></a>
+  <a href="https://gitlab.com/cardona-oss/pytest-servex/-/pipelines"><img alt="Pipeline" src="https://img.shields.io/gitlab/pipeline-status/cardona-oss%2Fpytest-servex?branch=main&style=flat-square"></a>
+  <a href="https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"></a>
+</p>
+
+<p align="center">
+  <a href="https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/README.md#quickstart">Quickstart</a> ·
+  <a href="https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/README.md#any-image">Any image</a> ·
+  <a href="https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/README.md#configuration">Configuration</a> ·
+  <a href="https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/README.md#compared-to-testcontainers">Compared to testcontainers</a> ·
+  <a href="https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/CHANGELOG.md">Changelog</a>
+</p>
+
+---
+
+## Overview
+
+Request `servex_postgres` or `servex_valkey` in a test and get a database of your own.
+`container_fixture` turns any other image into a session fixture, and `running` starts one in
+plain Python.
+
+With [pytest-parallex](https://pypi.org/project/pytest-parallex/) the container starts once for
+the whole run and each worker gets its own database on it. With pytest-xdist each worker starts
+its own container.
+
+It is an alternative to
+[testcontainers](https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/README.md#compared-to-testcontainers).
+It talks to the Docker API with the standard library: no docker SDK, no requests. Status: beta.
 
 ## Install
 
@@ -15,13 +39,14 @@ worker.
 pip install pytest-servex "psycopg[binary]"
 ```
 
-Requires Python 3.12+ and a Docker daemon. Talks to the Docker API directly with the standard
-library: no docker SDK, no requests.
+Requires Python 3.12+, pytest 8+ and a Docker daemon.
+
+`psycopg` is a dependency of pytest-servex, also when you use no Postgres. It needs a libpq:
+`psycopg[binary]` brings one.
 
 ## Quickstart
 
-Request `servex_postgres` in a test. It is a database of your own, on a container started once
-for the run:
+Request `servex_postgres` in a test. It is this worker's own database:
 
 ```python
 import psycopg
@@ -54,21 +79,26 @@ def servex_postgres_prepare():
 
 `servex_postgres` keeps rows from earlier tests on the same worker. Request
 `servex_postgres_clean` instead to get a fresh copy of the template before each test, seed rows
-included:
+included. The example uses SQLAlchemy (`pip install sqlalchemy`):
 
 ```python
+from sqlalchemy import create_engine
+
+
 def test_signup(servex_postgres_clean):
     engine = create_engine(servex_postgres_clean.sqlalchemy_url())
 ```
 
-The reset drops the database and clones the template again (about 175 ms for 66 tables, half the
-cost of a `TRUNCATE`). It closes open connections, so create engines inside the test or use
-`pool_pre_ping=True`.
+The reset drops the database and clones the template again. It closes open connections, so
+create engines inside the test or use `pool_pre_ping=True`.
+
+One measurement: 175 ms for a reset against 369 ms for one `TRUNCATE` of the same 66 tables
+(`postgres:17-alpine`, a loaded machine, 2026-11-16).
 
 ## Valkey and Redis
 
-Request `servex_valkey`. Each worker gets its own database number on one shared server, flushed
-when the worker starts and ends:
+Request `servex_valkey`. Each worker gets its own database number, flushed when the worker
+starts and ends. The example uses redis-py (`pip install redis`):
 
 ```python
 import redis
@@ -154,7 +184,7 @@ from dataclasses import replace
 from pytest_servex import POSTGRES, Network, running
 
 net = Network("app")
-pg = replace(POSTGRES, networks=(net,), alias="db", pull="never")
+pg = replace(POSTGRES, networks=(net,), alias="db")
 
 with running(net), running(pg) as started:
     print(started.endpoint(5432))  # Endpoint(host='127.0.0.1', port=32771)
@@ -193,7 +223,6 @@ Errors subclass the built-in they resemble, and all subclass `ServexError`:
 
 ## Links
 
-- Documentation: https://cardona-oss.gitlab.io/pytest-servex/
 - Source: https://gitlab.com/cardona-oss/pytest-servex
 - Issues: https://gitlab.com/cardona-oss/pytest-servex/-/issues
 - Changelog: https://gitlab.com/cardona-oss/pytest-servex/-/blob/main/CHANGELOG.md
