@@ -690,14 +690,14 @@ wheels = [
 
 [[package]]
 name = "pytest-parallex"
-version = "0.2.6"
+version = "0.2.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/23/54/58fd0909135782e8c0d8a9caa1f7ad7e8a72d906276d0408814cdab5d92d/pytest_parallex-0.2.6.tar.gz", hash = "sha256:9466fc3154962636812b99012e4a8520b83f9be7469bff3bf35149064b4c9ae3", size = 81046, upload-time = "2026-11-14T12:41:11.385Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/d0/ec8ef856fc060599dff393d5e233216d29e21e8fa2707260ae4bf0ca0307/pytest_parallex-0.2.8.tar.gz", hash = "sha256:3ed9e9487b44e790eb2814761db6068ee284eb4a60df85fba363e96f4aa2ef06", size = 83595, upload-time = "2026-11-21T12:18:57.508Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/9d/5aaeb6110ac9be0b71ee66e04a7bf083ad9bfbb3f94010071b34afdcd0ea/pytest_parallex-0.2.6-py3-none-any.whl", hash = "sha256:eeede55ada6258f4b2187b835deaab4fbf5cef19ebf9ef0fafcecff28324e18e", size = 49840, upload-time = "2026-11-14T12:41:10.287Z" },
+    { url = "https://files.pythonhosted.org/packages/91/57/def52138d0be191bfdfe7ff81e138fafe41ffd16d04df731057165bb6e25/pytest_parallex-0.2.8-py3-none-any.whl", hash = "sha256:fb8f75b29d5ddde1de238fac91ed054aa6dd8746dbe6dbdd972c071befb64286", size = 51066, upload-time = "2026-11-21T12:18:56.602Z" },
 ]
 
 [[package]]
@@ -741,7 +741,7 @@ dev = [
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pyright", extras = ["nodejs"], specifier = ">=1.1.390" },
     { name = "pytest", specifier = ">=8" },
-    { name = "pytest-parallex", specifier = ">=0.2.6" },
+    { name = "pytest-parallex", specifier = ">=0.2.8" },
     { name = "ruff", specifier = ">=0.6" },
 ]
 
